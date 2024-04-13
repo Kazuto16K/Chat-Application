@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="message-box">
+        <h2 style="color:white">Chat Room: {{code}}</h2>
+        
+            <div class="messages" id="messages">
+
+            </div>
+        
+
+        <!--<div class="input">
+            <input type="text" rows="3" placeholder="Enter Message" name="message" id="message">
+            <button type="button" name="send" id="send-btn" onclick="sendMessage()" class="btn btn-primary"> Send </button>
+        </div>-->
+
+        <div class="input-group flex-nowrap" id="input">
+
+            <input type="text" class="form-control" placeholder="Enter Message" 
+            aria-label="Username" aria-describedby="addon-wrapping" name="message" id="message">
+
+            <button type="button" name="send" id="send-btn" 
+            onclick="sendMessage()" class="btn btn-primary" 
+            style="margin-left:0.5vh; border-radius:5px"> Send </button>
+
+        </div>
+    </div>
+
+    <script type="text/javascript" defer>
+        var socketio = io();    //connects to socket server associated with our flask website
+
+        const messages = document.getElementById("messages");
+        const inpfield = document.getElementById("message");
+        const sendbtn = document.getElementById("send-btn");
+
+        function handleEnterKey(e){
+            if(e.key == 'Enter'){
+                sendbtn.click();
+            }
+        }
+        
+
+        const createMessage = (name, msg) => {
+            const content = `
+            <div class="text">
+                <li class="list-group-item list-group-item-light" style="border-radius: 4px; margin:1vh; opacity:0.8; padding:0.8vh; word-wrap:break-word; max-width:81vh; padding-right:3vh; font-size:large;">
+                <span>
+                    <strong>${name}</strong>: ${msg}    
+                </span>
+                </li>
+                <span class="muted">
+                    ${new Date().toLocaleString()}    
+                </span>
+                
+            </div>
+            `;
+
+            messages.innerHTML += content;
+        };
+
+        socketio.on("message", (data) =>{
+            createMessage(data.name, data.message)
+        });
+
+        const sendMessage = () => {
+            const message=document.getElementById("message");
+            console.log(message.value);
+            if(message.value == "") return;
+            socketio.emit("message",{ data: message.value });
+            message.value = "";
+        };
+
+        inpfield.addEventListener('keydown', handleEnterKey);
+    </script>
+
+{% for msg in messages %}
+    <script type="text/javascript">
+        createMessage("{{msg.name}}","{{msg.message}}");
+    </script>
+
+{% endfor %}
+
+{% endblock content %}
